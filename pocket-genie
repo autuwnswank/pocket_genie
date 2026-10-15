@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+if ! curl -sf http://localhost:8000/v1/models >/dev/null; then
+	echo "pocket-genie isnt running. Try: sudo systemctl start pocket-genie" >&2
+	exit 1
+fi
+
+PROMPT="$*"
+if [ -z "$PROMPT" ]; then
+	echo "Usage: pocket-genie <your question>" >&2
+	exit 1
+fi
+
+curl -s http://localhost:8000/v1/chat/completions \
+	-H "Content-Type: application/json" \
+	-d "$(jq -n --arg p "$PROMPT" '{
+	    model: "qwen",
+	    messages: [{role: "user", content: $p}],
+	    temperature: 0.7
+	}')" \
+| jq -r '.choices[0].message.content'
